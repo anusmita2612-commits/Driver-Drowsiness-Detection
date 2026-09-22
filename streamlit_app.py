@@ -4,8 +4,13 @@ import cv2
 import mediapipe as mp
 import math
 import time
-import winsound
 import threading
+
+# Windows alarm is available only on Windows
+try:
+    import winsound
+except ImportError:
+    winsound = None
 
 from collections import deque
 from streamlit_webrtc import webrtc_streamer
@@ -208,16 +213,19 @@ def alarm():
 
     while alarm_running:
 
-        try:
+        # Windows computer
+        if winsound is not None:
 
-            winsound.Beep(
-                1000,
-                500
-            )
+            try:
 
-        except:
+                winsound.Beep(
+                    1000,
+                    500
+                )
 
-            pass
+            except Exception:
+
+                pass
 
         time.sleep(0.1)
 
@@ -260,7 +268,7 @@ def video_frame_callback(frame):
     global was_drowsy
 
     # -----------------------------------------------------
-    # Get camera frame
+    # GET CAMERA FRAME
     # -----------------------------------------------------
 
     img = frame.to_ndarray(
@@ -273,9 +281,6 @@ def video_frame_callback(frame):
     # =====================================================
     # CREATE SMALLER FRAME FOR AI PROCESSING
     # =====================================================
-
-    # MediaPipe processes a smaller image.
-    # This significantly improves FPS.
 
     process_width = 640
 
@@ -340,7 +345,6 @@ def video_frame_callback(frame):
         face_landmarks = result.face_landmarks[0]
 
         process_height, process_width_actual = process_img.shape[:2]
-
 
         left_eye = []
 
@@ -407,7 +411,7 @@ def video_frame_callback(frame):
 
 
         # =================================================
-        # CONVERT LANDMARK POSITIONS BACK TO DISPLAY SIZE
+        # CONVERT LANDMARKS TO DISPLAY SIZE
         # =================================================
 
         x_scale = width / process_width_actual
@@ -489,6 +493,10 @@ def video_frame_callback(frame):
                 status = "DROWSY!"
 
 
+                # -----------------------------------------
+                # NEW DROWSINESS EVENT
+                # -----------------------------------------
+
                 if not was_drowsy:
 
                     latest_events += 1
@@ -513,6 +521,10 @@ def video_frame_callback(frame):
                             event_record
                         )
 
+
+                # -----------------------------------------
+                # START ALARM
+                # -----------------------------------------
 
                 start_alarm()
 
