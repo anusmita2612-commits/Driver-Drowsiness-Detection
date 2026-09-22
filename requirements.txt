@@ -1,0 +1,6 @@
+streamlit==1.64.0
+streamlit-webrtc
+opencv-python
+mediapipe==0.10.32
+numpy
+av
